@@ -2,6 +2,7 @@
 // Load the Visualization API and the corechart package.
 google.charts.load('current', { 'packages': ['corechart', 'controls'] });
 
+
 // Set a callback to run when the Google Visualization API is loaded.
 google.charts.setOnLoadCallback(drawCharts);
 
@@ -44,12 +45,12 @@ function drawCharts() {
     query = 'select A, B, C, D, E ORDER BY F DESC';
     GetDataFromSheet(URL, query, handleSalesByModelResponse);
 
-    // get expenses and show in area chart over time            
+    // get expenses and show in area chart over time
     URL = 'https://docs.google.com/spreadsheets/d/1SL8zq3X1PtzaHFrc7JYZwvOJiQFANf17ygG_fyNHN0I/gviz/tq?gid=192555712&headers=1';
     query = 'select A, B, C, D, E';
     GetDataFromSheet(URL, query, handleExpensesOverTime);
 
-    // sales by region can use the more vertical table, since doing a GROUP BY works well with the pie chart            
+    // sales by region can use the more vertical table, since doing a GROUP BY works well with the pie chart
     URL = 'https://docs.google.com/spreadsheets/d/1SL8zq3X1PtzaHFrc7JYZwvOJiQFANf17ygG_fyNHN0I/gviz/tq?gid=1124504831&headers=1';
     query = 'select A, B, sum(C) Group by A, B';
     GetDataFromSheet(URL, query, handleSalesByRegion);
@@ -59,7 +60,7 @@ function drawCharts() {
 //------------------------------------------------------------------------------
 
 function prepareDataTableForPieChart(data, labelArray) {
-    // this function takes an existing data table with one row of data, and 
+    // this function takes an existing data table with one row of data, and
     // returns another data table formatted for use with a Pie Chart
     var finalData = new google.visualization.DataTable();
     finalData.addColumn('string');
@@ -76,7 +77,7 @@ function prepareDataTableForPieChart(data, labelArray) {
 
 function handleOverallIncomeResponse(response) {
     var data = response.getDataTable();
-    
+
     // add a new column for the tooltip
     data.addColumn({
         type: 'string',
@@ -91,20 +92,20 @@ function handleOverallIncomeResponse(response) {
 
     var view = new google.visualization.DataView(data);
     view.setColumns([0, 4, tooltipColumnIndex]);    // use just the date, the total, and our custom tooltip
-    
-    // use the hidden divTooltipChart to draw the pie chart for each row/date 
+
+    // use the hidden divTooltipChart to draw the pie chart for each row/date
     var tooltipChart = new google.visualization.PieChart(document.getElementById('divTooltipChart'));
-    
+
     // each row of data will get a custom HTML tooltip
     for (var i = 0; i < numRows; i++) {
-        
+
         var theDate = data.getValue(i, 0);
         var dateString = monthName(theDate.getMonth()) + ' ' + theDate.getFullYear();
         var standardBikeSales = data.getValue(i, 1);
         var electricBikeSales = data.getValue(i, 2);
         var accessoriesSales = data.getValue(i, 3);
         var topSalesRep = data.getValue(i, 5);
-        
+
         // draw a pie chart that drills down into the month's income sources
         var pieData = google.visualization.arrayToDataTable([
             ['Category', 'Amount'],
@@ -112,7 +113,7 @@ function handleOverallIncomeResponse(response) {
             ['Electric Bikes', electricBikeSales],
             ['Accessories', accessoriesSales]
         ]);
-        
+
         var pieOptions = {
             title: 'Income By Category',
             height: 180,
@@ -122,18 +123,18 @@ function handleOverallIncomeResponse(response) {
             },
             pieSliceText: 'none'   // show the actual value rather than percentage
         };
-                
+
         // when the chart is drawn, get a PNG of it and use it as a tooltip
         google.visualization.events.addListener(tooltipChart, 'ready', function() {
             // get a static image of the new chart, and add that as a tooltip to the main view
-            var tooltipHtml = 
+            var tooltipHtml =
             '<div style="border: 3px solid black; padding: 0px; ">' +
                 '<img src="' + tooltipChart.getImageURI() + '">' +
-                '<style>' + 
+                '<style>' +
                     '.tiptab { border: 1px solid black; border-collapse: collapse;  }' +
                     '.td { font-family: Helvetica, Arial; font-size: 0.9em; padding: 5px;}' +
                 '</style>' +
-                '<div style="width: 200px; margin-top: 0; margin-left: auto; margin-right: auto; padding: 10px; padding-top: 0;">' + 
+                '<div style="width: 200px; margin-top: 0; margin-left: auto; margin-right: auto; padding: 10px; padding-top: 0;">' +
                     '<span style="font-weight: bold; ">' + dateString + ':</span><br/><br/>' +
                     '<table class="tiptab">' +
                     '<tr><td class="td">Standard Bikes</td><td class="td">$' +  standardBikeSales.commaSeparated() + '</td></tr>' +
@@ -149,23 +150,23 @@ function handleOverallIncomeResponse(response) {
         // draw into the temp div - this will trigger the 'ready' event handled above
         tooltipChart.draw(pieData, pieOptions);
     }
-    
+
     // chart options
     var options = {
         title: 'Monthly Income',
         height: 350,
         legend: { position: 'top', maxLines: 3 },
-        vAxis: { 
+        vAxis: {
             minValue: 0,
             format: 'currency'
         },
         chartArea: { left: '15%', width: '85%'},
-        tooltip: { 
+        tooltip: {
             isHtml: true,
             ignoreBounds: false
          }
     };
-    
+
     var chart = new google.visualization.AreaChart(document.getElementById('divIncomeOverTime'));
     chart.draw(view, options);
 }
@@ -175,9 +176,9 @@ function handleOverallIncomeResponse(response) {
 function handleExpensesOverTime(response) {
 
     var data = response.getDataTable();
-    
+
     var container = new google.visualization.Dashboard(document.getElementById('divExpensesOverTimeContainer'));
-    
+
     var rangeControl = new google.visualization.ControlWrapper({
         controlType: 'ChartRangeFilter',
         containerId: 'divExpensesRangeSlider',
@@ -191,10 +192,10 @@ function handleExpensesOverTime(response) {
                     vAxis: { minValue: 0 },
                     chartArea: { left: '5%', width: '100%' }
                 },
-            }   
+            }
         }
     });
-    
+
     var areaChartOptions = {
         title: 'Monthly Expenses',
         height: 300,
@@ -206,13 +207,13 @@ function handleExpensesOverTime(response) {
         },
         chartArea: { left: '15%', width: '80%' }
     };
-    
+
     var chart = new google.visualization.ChartWrapper({
         chartType: 'AreaChart',
         containerId: 'divExpensesOverTime',
         options: areaChartOptions
     });
-       
+
     container.bind(rangeControl, chart);
     container.draw(data);
 }
@@ -329,7 +330,7 @@ function handleSalesByRegion(response) {
 function handleSalesByModelResponse(response) {
 
     var salesByModelData = response.getDataTable();
-    
+
     var options = {
         title: 'Sales By Bicycle Model',
         height: 350,
@@ -337,12 +338,12 @@ function handleSalesByModelResponse(response) {
         chartArea: { left: '15%', width: '80%'},
         isStacked: true
     };
-    
+
     var salesByModelChart = new google.visualization.BarChart(document.getElementById('divSalesByModel'));
     salesByModelChart.draw(salesByModelData, options);
 
     google.visualization.events.addListener(salesByModelChart, 'select', function () {
-        // which model and region got clicked on?  getSelection() returns an array of selected items 
+        // which model and region got clicked on?  getSelection() returns an array of selected items
         var selectedItems = salesByModelChart.getSelection();
 
         for (var i = 0; i < selectedItems.length; i++) {
@@ -355,7 +356,7 @@ function handleSalesByModelResponse(response) {
             // get the model name, which is in column 0
             var modelName = salesByModelData.getValue(row, 0);
 
-            // get the sales region, which is a header 
+            // get the sales region, which is a header
             var salesRegion = salesByModelData.getColumnLabel(col);
 
             // now retrieve all of the sales for that model, in that region
@@ -367,7 +368,7 @@ function handleSalesByModelResponse(response) {
 }
 
 function showPopupSalesForModelInRegion(response) {
-        
+
     var detailData = response.getDataTable();
 
     var options = {
@@ -386,7 +387,7 @@ function showPopupSalesForModelInRegion(response) {
             }
         }
     };
-    
+
     var chart = new google.visualization.ColumnChart(document.getElementById('divDetailChart'));
     chart.draw(detailData, options);
 
@@ -397,7 +398,7 @@ function showPopupSalesForModelInRegion(response) {
 
 //------------------------------------------------------------------------------
 
-// Misc functions 
+// Misc functions
 Number.prototype.commaSeparated = function() {
     var n = this;
     return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -406,4 +407,3 @@ Number.prototype.commaSeparated = function() {
 function monthName(n) {
     return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', "Jul", 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][n];
 }
-
